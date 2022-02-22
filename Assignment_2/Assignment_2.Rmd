@@ -1,0 +1,64 @@
+---
+title: "Assignment_2"
+author: "Dengcheng"
+date: "2022/2/20"
+output: pdf_document
+---
+
+```{r}
+library(readr)
+Ubank <- read_delim(file = 'UniversalBank.csv',delim=',')
+library(reshape)
+Ubank <- rename(Ubank,c('Personal Load' = 'PL',)
+summary(Ubank)
+```
+
+```{r}
+Ubank$ID <-  NULL
+Ubank$`ZIP Code` <- NULL
+
+Ubank$Education = as.factor(Ubank$Education)
+Ubank$`Personal Loan` = as.factor(Ubank$'Personal Loan')
+summary(Ubank)
+```
+
+```{r}
+library(caret)
+library(class)
+
+dummies <- dummyVars( ~ ., data = Ubank)
+Ubank_dummy <- as.data.frame(predict(dummies, newdata= Ubank))
+head(Ubank_dummy)
+```
+
+```{r}
+Norm_model <- preProcess(Ubank_dummy,method = c("center", "scale"))
+Ubank_norm = predict(Norm_model,Ubank_dummy)
+summary(Ubank_norm)
+```
+
+
+```{r}
+Train_Index = createDataPartition(Ubank$`Personal Loan`,p=0.6, list=FALSE)
+Train.df = Ubank_norm[Train_Index,]
+Validation.df = Ubank_norm[-Train_Index,]
+```
+
+*Q1*Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
+Credit Card = 1. Perform a k-NN classification with all predictors except ID and ZIP code
+using k = 1. Remember to transform categorical predictors with more than two categories
+into dummy variables first. Specify the success class as 1 (loan acceptance), and use the
+default cutoff value of 0.5. How would this customer be classified?
+
+```{r}
+To_Predict=data.frame(Age=35, Experience = 10, Income = 84, Family = 2, CCAvg = 2, 
+                      Education.1 = 0, Education.2 = 1, Education.3 = 0, Mortgage = 0,
+                      'Securities Account' = 0, 'CD Account' = 0, Online = 1)
+                   
+print(To_Predict)
+```
+
+```{r}
+To_Predict.df <- predict(Train.df,To_Predict)
+print(To_Predict_norm)
+```

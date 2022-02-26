@@ -1,64 +1,121 @@
 ---
 title: "Assignment_2"
-author: "Dengcheng"
+author: "Dengcheng Chen"
 date: "2022/2/20"
-output: pdf_document
+output:
+  html_document:
+    df_print: paged
+  word_document: default
+  pdf_document: default
 ---
 
 ```{r}
 library(readr)
 Ubank <- read_delim(file = 'UniversalBank.csv',delim=',')
 library(reshape)
-Ubank <- rename(Ubank,c('Personal Load' = 'PL',)
+Ubank <- rename(Ubank,c(`Personal Loan` = 'PL','Securities Account'='SA','CD Account'='CDA'))
+names(Ubank)
 summary(Ubank)
 ```
+
 
 ```{r}
 Ubank$ID <-  NULL
 Ubank$`ZIP Code` <- NULL
 
 Ubank$Education = as.factor(Ubank$Education)
-Ubank$`Personal Loan` = as.factor(Ubank$'Personal Loan')
+Ubank$PL = as.factor(Ubank$PL)
 summary(Ubank)
 ```
-
 ```{r}
 library(caret)
 library(class)
 
-dummies <- dummyVars( ~ ., data = Ubank)
+dummies <- dummyVars(PL ~ ., data = Ubank)
 Ubank_dummy <- as.data.frame(predict(dummies, newdata= Ubank))
 head(Ubank_dummy)
 ```
+
+
 
 ```{r}
 Norm_model <- preProcess(Ubank_dummy,method = c("center", "scale"))
 Ubank_norm = predict(Norm_model,Ubank_dummy)
 summary(Ubank_norm)
 ```
+```{r}
+Ubank_norm$PL=Ubank$PL
+```
 
 
 ```{r}
-Train_Index = createDataPartition(Ubank$`Personal Loan`,p=0.6, list=FALSE)
+Train_Index = createDataPartition(Ubank$PL,p=0.6, list=FALSE)
 Train.df = Ubank_norm[Train_Index,]
 Validation.df = Ubank_norm[-Train_Index,]
 ```
 
-*Q1*Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
-Credit Card = 1. Perform a k-NN classification with all predictors except ID and ZIP code
+*Q1* Age = 40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0, Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1, and
+CreditCard = 1. Perform a k-NN classification with all predictors except ID and ZIP code
 using k = 1. Remember to transform categorical predictors with more than two categories
 into dummy variables first. Specify the success class as 1 (loan acceptance), and use the
 default cutoff value of 0.5. How would this customer be classified?
 
 ```{r}
-To_Predict=data.frame(Age=35, Experience = 10, Income = 84, Family = 2, CCAvg = 2, 
+To_Predict=data.frame(Age=40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, 
                       Education.1 = 0, Education.2 = 1, Education.3 = 0, Mortgage = 0,
-                      'Securities Account' = 0, 'CD Account' = 0, Online = 1)
+                     SA = 0, CDA = 0, Online = 1,CreditCard = 1)
                    
 print(To_Predict)
 ```
 
 ```{r}
-To_Predict.df <- predict(Train.df,To_Predict)
+To_Predict_norm <- predict(Norm_model,To_Predict)
 print(To_Predict_norm)
 ```
+```{r}
+Prediction <- knn(train = Train.df[1:13],
+                  test = To_Predict_norm[1:13],
+                  cl=Train.df$PL,
+                  k=1)
+print(Prediction)
+```
+
+Addicting to the result, the customer will not be the targeted one.
+
+*Q2* What is a choice of k that balances between overfitting and ignoring the predictor 
+information?
+
+```{r}
+set.seed(123)
+fitControl <- trainControl(method = "repeatedcv",
+                           number = 3,
+                           repeats = 2)
+searchGrid=expand.grid(k = 1:15)
+Knn.model=train(PL~., 
+                data=Train.df,
+                method='knn',
+                tuneGrid=searchGrid,
+                trControl = fitControl,)
+
+Knn.model
+```
+*Q3* Show the confusion matrix for the validation data that results from using the best k.
+
+```{r}
+predictions<-predict(Knn.model,Validation.df)
+confusionMatrix(predictions,Validation.df$PL)
+```
+*Q4* Consider the following customer: Age = 40, Experience = 10, Income = 84,
+Family = 2, CCAvg = 2, Education_1 = 0, Education_2 = 1, Education_3 = 0,
+Mortgage = 0, Securities Account = 0, CD Account = 0, Online = 1 and Credit
+Card = 1. Classify the customer using the best k.
+
+```{r}
+To_Predict=data.frame(Age=40, Experience = 10, Income = 84, Family = 2, CCAvg = 2, 
+                      Education.1 = 0, Education.2 = 1, Education.3 = 0, Mortgage = 0,
+                     SA = 0, CDA = 0, Online = 1,CreditCard = 1)
+To_Predict_norm=predict(Norm_model,To_Predict)
+predict(Knn.model,To_Predict_norm)
+```
+
+Also, this cumstomer is not the targeted one.

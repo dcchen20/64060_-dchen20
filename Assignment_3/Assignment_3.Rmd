@@ -1,0 +1,99 @@
+---
+title: "Assignment_3"
+author: "Dengcheng"
+date: "2022/3/6"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r}
+library(caret)
+library(class)
+library(ISLR)
+library(readr)
+library(reshape)
+DF <- read_delim(file = 'UniversalBank.csv',delim=',')
+DF <- rename(DF,c('CreditCard'='CC',`Personal Loan` = 'PL','Securities Account'='SA','CD Account'='CDA'))
+names(DF)
+DF$PL=as.factor(DF$PL)
+summary(DF)
+```
+
+
+
+*Task A*Create a pivot table for the training data with Online as a column variable, CC as a row variable, and Loan as a secondary row variable. The values inside the table should convey
+the count. In R use functions melt() and cast(), or function table(). In Python, use panda
+dataframe methods melt() and pivot().
+```{r}
+Train_Index = createDataPartition(DF$PL,p=0.6, list=FALSE) # 60% reserved for Train
+Train.df=DF[Train_Index,]
+Validation.df=DF[-Train_Index,]
+
+mytable <- xtabs(~ CC+PL+Online, data=Train.df)
+ftable(mytable) 
+```
+
+*Task B* Consider the task of classifying a customer who owns a bank credit card and is actively using online banking services. Looking at the pivot table, what is the probability that this customer will accept the loan offer? [This is the probability of loan acceptance (Loan = 1) conditional on having a bank credit card (CC = 1) and being an active user of online banking services (Online= 1)].
+
+p( PL=1&CC=1&Online=1 | CC=1&Online=1) = 50/(479+50)=0.095
+
+*Task C* Create two separate pivot tables for the training data. One will have Loan (rows) as a
+function of Online (columns) and the other will have Loan (rows) as a function of CC.
+
+```{r}
+table(PL=Train.df$PL, Online=Train.df$Online)
+table(PL=Train.df$PL, CC=Train.df$CC)
+```
+
+
+*Task D* Compute the following quantities [P(A | B) means “the probability ofA given B”]:
+i. P(CC = 1 | Loan = 1) (the proportion of credit card holders among the loan acceptors)
+ii. P(Online = 1 | Loan = 1)
+iii. P(Loan = 1) (the proportion of loan acceptors)
+iv. P(CC = 1 | Loan = 0)
+v. P(Online = 1 | Loan = 0)
+vi. P(Loan = 0)
+
+i. P(CC = 1 | Loan = 1) = 83/(205+83) = 0.29
+ii. P(Online = 1 | Loan = 1) = 180/(108+180) = 0.625
+iii. P(Loan = 1) = (108+180+205+83)/(1117+1595+108+180+1914+798+205+83) = 0.096
+iv. P(CC = 1 | Loan = 0) = 798/(1914+798) = 0.29
+v. P(Online = 1 | Loan = 0) = 1595/(1117 +1595)= 0.59
+vi. P(Loan = 0) = 1-P(Loan = 1) = 0.904
+
+
+*Task E* Use the quantities computed above to compute the naive Bayes probability P(Loan = 1 | CC = 1, Online = 1).
+
+P(CC = 1) =  (798+83)/(1914+205+798+83) = 0.29
+P(Online = 1) = (1595+180)/(1117+108+1595+180) = 0.59
+P(Loan = 1 | CC = 1, Online = 1) = [P(CC = 1|Loan = 1)P(Online = 1|Loan = 1)P(Loan = 1)]
+                                    /[P(CC = 1)P(Online = 1)]
+                                 =0.29*0.625*0.096/(0.29*0.59) = 0.10
+                                 
+*Task F* Compare this value with the one obtained from the pivot table in (B). Which is a more
+accurate estimate?
+
+Task E is more accurate.
+
+*Task G* Which of the entries in this table are needed for computing P(Loan = 1 | CC = 1, Online = 1)? Run naive Bayes on the data. Examine the model output on training data, and find the entry that corresponds to P(Loan = 1 | CC = 1, Online = 1). Compare this to the number you
+obtained in (E).
+
+```{r}
+library(e1071)
+nb.model<-naiveBayes (PL~CC+Online, data=Train.df)
+To_Predict=data.frame(CC=1, Online = 1)
+predict(nb.model,To_Predict,type='raw')
+```
+
+The result is very close to (E).
+
+.

@@ -1,0 +1,65 @@
+---
+title: "Assignment_4"
+author: "Dengcheng Chen"
+date: "2022/3/20"
+output:
+  html_document:
+    df_print: paged
+---
+
+
+```{r}
+library(readr)
+library(tidyverse)
+library(factoextra)
+library(ISLR)
+Phar <- read.csv("Pharmaceuticals.csv", header=TRUE)
+Phar <- Phar[,3:11]
+head(Phar)
+```
+
+**a**Use only the numerical variables (1 to 9) to cluster the 21 firms. Justify the various choices made in conducting the cluster analysis, such as weights for different variables, the specific clustering algorithm(s) used, the number of clusters formed, and so on.
+
+
+Choose k value
+```{r}
+Phars <- scale(Phar)
+fviz_nbclust(Phars, kmeans, method = "wss")
+fviz_nbclust(Phars, kmeans, method = "silhouette")
+```
+
+
+```{r}
+set.seed(123)
+k5 <- kmeans(Phars, centers = 5, nstart = 25)
+k5$centers
+k5$size
+fviz_cluster(k5, data = Phars)
+```
+**b**
+Cluster 1: Row 3,7,10,16,19,21
+Cluster 2: Row 6,8,12
+Cluster 3: Row 2,18
+Cluster 4: Row 11,13,15,17
+Cluster 5: Row 5,9,14,20
+
+Cluster 1: low PE_Ratio, low Rev_growth, high Net_Profit_Margin.
+Cluster 2: highe Beta, high Leverage,lowe Market_Cap.
+Cluster 3: high PE_ratio, low ROE, low ROA, low Net Profit Margin
+Cluster 4: high Market_Cap, high ROE, high ROA, high Asset_Turnover
+Cluster 5: low Market_Cap, low Asset_Turnover, high Rev_growth
+
+
+**C**
+Yes. 1 and 4.
+
+**d**
+Cluster 1: high Net_Profit_Margin choice
+Cluster 2: high Leverage for warriors 
+Cluster 3: bad choice: low return low Net Profit Margin away from me 
+Cluster 4: steady inventing with high Asset_Turnover and high Market_Cap
+Cluster 5: high Rev_growth for future
+
+
+
+

@@ -1,0 +1,59 @@
+---
+title: "Assignment_5"
+author: "Dengcheng Chen"
+date: "04/17/2022"
+output:
+  html_document: default
+  word_document: default
+  pdf_document: default
+---
+
+**Data Preprocessing. Remove all cereals with missing values**
+
+```{r}
+library(readr)
+C.df <-read.csv('Cereals.csv',header=TRUE)
+C.df <- na.omit(C.df)
+rownames(C.df) <- C.df$name
+C.df$name = NULL
+C.df <- C.df[,3:15]
+C.df <- scale(C.df)
+summary(C.df)
+```
+**Q1**Apply hierarchical clustering to the data using Euclidean distance to the normalized
+measurements. Use Agnes to compare the clustering from  single linkage, complete
+linkage, average linkage, and Ward. Choose the best method.
+
+```{r}
+library(factoextra)
+dist <- dist(C.df, method = "euclidean")
+HC_C <- hclust(dist, method = "complete")
+HC_S <- hclust(dist, method = "single")
+HC_A <- hclust(dist, method = "average")
+HC_W <- hclust(dist, method = "ward.D2")
+plot(HC_C,cex=0.5,hang=0.1)
+plot(HC_S,cex=0.5,hang=0.1)
+plot(HC_A,cex=0.5,hang=0.1)
+plot(HC_W,cex=0.5,hang=0.1)
+```
+**Q2**How many clusters would you choose?
+```{r}
+plot(HC_W,cex=0.5,hang=0.1)
+rect.hclust(HC_W, k = 5, border = 1:5)
+plot(HC_W,cex=0.5,hang=0.1)
+rect.hclust(HC_W, k = 4, border = 1:4)
+plot(HC_W,cex=0.5,hang=0.1)
+rect.hclust(HC_W, k = 6, border = 1:6)
+plot(HC_W,cex=0.5,hang=0.1)
+rect.hclust(HC_W, k = 7, border = 1:7)
+```
+I will choose 6 clusters.
+
+**Q3**The elementary public schools would like to choose a set of cereals to include in their 
+daily cafeterias. Every day a different cereal is offered, but all cereals should support a 
+healthy diet. For this goal, you are requested to find a cluster of “healthy cereals.” 
+
+For elementary public schools,the definition of he health should be high protein, high vitamin, and reasonable calories. So, I will choose the 1st cluster counting form the right as the “healthy cereals” 
+
+
+
